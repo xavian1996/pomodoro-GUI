@@ -1,5 +1,5 @@
 from pomodoro_ui import Ui_MainWindow
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
 from openpyxl import load_workbook, Workbook
 from datetime import timedelta
 import re
@@ -53,6 +53,14 @@ style_sheet = """
         background-color : red;
     }
 
+    QLabel#message {
+        border: 3px solid black;
+        border-radius: 5px;
+        color: black;
+        font-family: Segoe UI Black;
+        font-size: 20px 
+    }
+
     QRoundProgressBar {
         background-color: rgb(72, 5, 122)
         }
@@ -89,6 +97,11 @@ class POMODORO(QtWidgets.QWidget):
         self.ui.comboBox.setCurrentText('Select a task or, Enter new one.')
         self.working_on = None
         self.ui.comboBox.currentTextChanged.connect(self.taskOption)
+        
+        url = QtCore.QUrl.fromLocalFile('alert.wav')
+        content = QtMultimedia.QMediaContent(url)
+        self.alert = QtMultimedia.QMediaPlayer()
+        self.alert.setMedia(content)
 
         self.curent_time = 25 * 60
         self.ui.progressBar.setValue(0)
@@ -142,23 +155,26 @@ class POMODORO(QtWidgets.QWidget):
             row = combo.property('row') + 2
             col = 2
             data = combo.currentText()
-        
-        sheet.cell(row, col).value = data
+            sheet.cell(row, col).value = data
+
         #Update comboBox
         self.ui.comboBox.clear()
         for row in range(1, sheet.max_row + 1):
             if sheet['B' + str(row)].value == 'not yet':
                 self.ui.comboBox.addItem(sheet['A' + str(row)].value)
+                
         wb.save('data.xlsx')
     
     def counterOption(self):
         button = self.sender()
         if button.text() == 'START':
+            self.ui.message.setText(self.message)
             self.ui.comboBox.setDisabled(True)
             self.timer.start(self.counter)
             button.setText('STOP')
         
         else:
+            self.ui.message.setText('STOPED')
             self.loop += 1
             self.ui.comboBox.setEnabled(True)
             self.timer.stop()
@@ -169,6 +185,7 @@ class POMODORO(QtWidgets.QWidget):
     def taskOption(self):
         task = self.sender()
         self.working_on = task.currentText()
+        self.message = f"time to work on: {self.working_on}"
 
     def handleTimer(self):
         self.counter -= 1
@@ -180,18 +197,22 @@ class POMODORO(QtWidgets.QWidget):
             value = value + 1
             self.ui.progressBar.setValue(value)
         else:
+            self.alert.play()
             self.loop += 1
             if self.loop%4 == 0:
+                self.message = 'Take a long rest.'
                 self.counter = 15 * 60
                 self.curent_time = self.counter
                 self.ui.progressBar.setRange(0, self.curent_time)
                 
             elif self.loop%2 == 1:
+                self.message = 'Take a short rest.'
                 self.counter = 5 * 60
                 self.curent_time = self.counter
                 self.ui.progressBar.setRange(0, self.curent_time)
                 
             else:
+                self.message = f"Time to work on: {self.working_on}"
                 self.counter = 25 * 60
                 self.ui.progressBar.setRange(0, self.curent_time)
 
