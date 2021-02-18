@@ -147,6 +147,12 @@ class Ui_MainWindow(object):
         self.checkBox.setFont(font)
         self.checkBox.setObjectName("checkBox")
         self.horizontalLayout.addWidget(self.checkBox)
+
+        self.message = QtWidgets.QLabel(self.counter_tab)
+        self.message.setObjectName('message')
+        self.message.setAlignment(QtCore.Qt.AlignHCenter)
+        self.message.move(100, 125)
+        self.message.resize(400, 40)
         self.tabWidget.addTab(self.counter_tab, "")
         self.tabWidget.setTabIcon(0, QtGui.QIcon('counter.png'))
         self.tasks_tab = QtWidgets.QWidget()
